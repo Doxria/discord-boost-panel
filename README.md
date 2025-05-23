@@ -2,8 +2,6 @@
 
 A modern web application for managing and boosting Discord servers using Nitro tokens. Built with Node.js, Express, and a sleek Discord-inspired UI.
 
-![Discord Nitro Booster](https://i.imgur.com/placeholder.png)
-
 ## Features
 
 - 🎨 Modern Discord-inspired UI with dark theme
