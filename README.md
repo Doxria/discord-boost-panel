@@ -23,7 +23,7 @@ A modern web application for managing and boosting Discord servers using Nitro t
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/discord-booster.git
+git clone https://github.com/doxria/discord-booster.git
 cd discord-booster
 ```
 
@@ -42,9 +42,7 @@ PORT=3000
 
 4. Start the application:
 ```bash
-npm start
-# or
-yarn start
+node web.js
 ```
 
 The application will be available at `http://localhost:3000`
@@ -84,16 +82,6 @@ The right panel displays detailed information about each token:
 - Tokens are stored securely on your local machine
 - No tokens are sent to external servers except Discord's API
 - Use this tool responsibly and in accordance with Discord's Terms of Service
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## License
 
