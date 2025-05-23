@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/output.css" rel="stylesheet">
+</head>
+<body class="bg-discord-dark min-h-screen text-discord-light font-sans">
+    <div class="flex min-h-screen">
+        <!-- Left: Avatar Panel -->
+        <div class="flex flex-col items-center h-screen min-h-screen bg-discord-darkest overflow-visible border-r border-discord-darkest" style="min-width:72px;max-width:72px;">
+            <!-- Discord logo at the top -->
+            <div class="w-12 h-12 flex items-center justify-center mt-4 mb-2">
+                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Discord" class="w-10 h-10 rounded-2xl bg-discord-blurple p-1">
+            </div>
+            <!-- Avatar list in the middle -->
+            <div id="tokenAvatarList" class="flex-1 flex flex-col gap-2 w-full items-center overflow-y-auto overflow-x-hidden overflow-visible scrollbar-none pb-4"></div>
+            <!-- + button at the bottom -->
+            <button id="addTokenBtn" class="mb-6 w-12 h-12 flex items-center justify-center rounded-2xl bg-discord-darkest text-discord-blurple hover:bg-discord-blurple hover:text-white transition text-3xl shadow-lg border-2 border-discord-darkest">+</button>
+            <!-- Add/Edit Token Modal -->
+            <div id="tokenModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
+                <div class="bg-discord-darker rounded-xl p-6 w-80 shadow-2xl border border-discord-darkest">
+                    <h4 id="modalTitle" class="text-lg font-bold mb-4 text-discord-blurple">Add Token</h4>
+                    <input id="modalTokenValue" class="input-discord w-full mb-2" placeholder="Token value">
+                    <div class="flex justify-between items-center space-x-2 mt-4">
+                        <button id="modalDelete" class="btn-discord bg-discord-error hover:bg-red-700 flex-1">Delete</button>
+                        <div class="flex space-x-2 flex-1 justify-end">
+                            <button id="modalCancel" class="btn-discord bg-discord-error hover:bg-red-700">Cancel</button>
+                            <button id="modalSave" class="btn-discord">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Token Status Panel -->
+        <div class="w-96 panel-discord p-4 overflow-y-auto scrollbar-discord bg-discord-darkest">
+            <h2 class="header-discord mb-4">Token Status</h2>
+            <div id="tokenStatus" class="space-y-4">
+                <!-- Token status cards will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8 bg-discord-dark/80">
+            <div class="max-w-4xl mx-auto">
+                <!-- Header -->
+                <header class="text-center mb-12">
+                    <h1 class="header-discord bg-gradient-to-r from-discord-blurple to-purple-500 bg-clip-text text-transparent">
+                        Discord Nitro Booster
+                    </h1>
+                    <p class="text-discord-light/80 text-lg">
+                        <%= description %>
+                    </p>
+                </header>
+
+                <!-- Main Card -->
+                <div class="card-discord backdrop-blur-md bg-opacity-90">
+                    <form id="boostForm" class="space-y-6">
+                        <!-- Server ID Input -->
+                        <div class="space-y-2">
+                            <label for="guildId" class="block text-sm font-medium text-discord-light/90">
+                                Server ID
+                            </label>
+                            <input type="text" 
+                                   id="guildId" 
+                                   name="guildId" 
+                                   class="input-discord w-full" 
+                                   placeholder="Enter your Discord server ID"
+                                   required>
+                        </div>
+
+                        <!-- Tokens Input -->
+                        <div class="space-y-2">
+                            <label for="tokens" class="block text-sm font-medium text-discord-light/90">
+                                Tokens
+                            </label>
+                            <textarea id="tokens" 
+                                      name="tokens" 
+                                      rows="8" 
+                                      class="input-discord w-full resize-none scrollbar-discord" 
+                                      placeholder="Paste your tokens here (one per line)"
+                                      required></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" 
+                                class="btn-discord w-full flex items-center justify-center space-x-2 py-3">
+                            <span>Start Boosting</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- Results Section -->
+                    <div id="results" class="mt-8 space-y-4"></div>
+                </div>
+
+                <!-- Footer -->
+                <footer class="mt-8 text-center text-discord-light/60 text-sm">
+                    <p>Use responsibly and in accordance with Discord's Terms of Service</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Token status check function
+        async function checkTokenStatus() {
+            const tokens = document.getElementById('tokens').value;
+            if (!tokens.trim()) return;
+
+            const statusDiv = document.getElementById('tokenStatus');
+            statusDiv.innerHTML = '<div class="text-center text-discord-light/60">Checking tokens...</div>';
+
+            try {
+                const response = await fetch('/check-tokens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tokens })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-discord-error/10 border border-discord-error rounded-lg">
+                            <div class="flex items-center space-x-2 text-discord-error">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>${data.error}</span>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                statusDiv.innerHTML = data.results.map(result => `
+                    <div class="card-discord p-4 ${result.valid ? 'border-discord-blurple' : 'border-discord-error'}">
+                        ${result.valid ? `
+                            <div class="flex items-center space-x-3 mb-3">
+                                <img src="${result.avatar 
+                                    ? `https://cdn.discordapp.com/avatars/${result.id}/${result.avatar}${result.avatar.startsWith('a_') ? '.gif' : '.png'}` 
+                                    : 'https://cdn.discordapp.com/embed/avatars/0.png'}" 
+                                     alt="Avatar" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <div class="font-semibold">${result.username}#${result.discriminator}</div>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="text-sm ${result.nitroStatus === 'active' ? 'text-discord-success' : 'text-discord-error'}">${result.nitroStatus === 'active' ? 'Nitro Active' : 'No Nitro'}</div>
+                                        ${result.totalBoosts > 0 ? `<span class="text-sm text-discord-blurple">(${result.totalBoosts} active boost${result.totalBoosts > 1 ? 's' : ''})</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            ${result.boostedServers.length > 0 ? `
+                                <div class="mt-2">
+                                    <div class="text-sm font-medium mb-2">Boosted Servers:</div>
+                                    <div class="space-y-2">
+                                        ${result.boostedServers.map(server => `
+                                            <div class="flex items-center justify-between text-sm bg-discord-darkest/50 p-2 rounded">
+                                                <div class="flex items-center space-x-2 flex-1 min-w-0">
+                                                    <img src="${server.icon ? `https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="${server.name}" class="w-6 h-6 rounded flex-shrink-0">
+                                                    <span class="whitespace-nowrap overflow-x-auto max-w-[160px] block" style="overflow-y:hidden;">${server.name}</span>
+                                                </div>
+                                                <div class="flex items-center space-x-2 flex-shrink-0">
+                                                    ${server.status === 'active' ? `
+                                                        <span class="text-discord-success">Active</span>
+                                                        <span class="text-discord-blurple">
+                                                            (${server.premiumSubscriptionCount || server.boostCount} boost${(server.premiumSubscriptionCount || server.boostCount) > 1 ? 's' : ''})
+                                                        </span>
+                                                    ` : `
+                                                        <span class="text-discord-light/60">Cooldown</span>
+                                                        ${server.cooldownEnds ? `
+                                                            <span class="text-xs text-discord-light/40">
+                                                                until ${new Date(server.cooldownEnds).toLocaleDateString()}
+                                                            </span>
+                                                        ` : ''}
+                                                    `}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="text-sm text-discord-light/60">No boosted servers found</div>
+                            `}
+                        ` : `
+                            <div class="flex items-center space-x-2 text-discord-error">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>${result.error}</span>
+                            </div>
+                        `}
+                    </div>
+                `).join('');
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="p-4 bg-discord-error/10 border border-discord-error rounded-lg">
+                        <div class="flex items-center space-x-2 text-discord-error">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Error: ${error.message}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Add debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Add event listener for token input with debounce
+        document.getElementById('tokens').addEventListener('input', debounce(checkTokenStatus, 1000));
+
+        // Existing boost form submit handler
+        document.getElementById('boostForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultsDiv = document.getElementById('results');
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+            `;
+
+            resultsDiv.innerHTML = `
+                <div class="flex items-center justify-center p-4 bg-discord-darker/50 rounded-lg animate-pulse-slow">
+                    <div class="text-center">
+                        <div class="text-discord-blurple mb-2">Processing your tokens...</div>
+                        <div class="text-sm text-discord-light/60">This may take a few moments</div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/boost', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        guildId: document.getElementById('guildId').value,
+                        tokens: document.getElementById('tokens').value
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultsDiv.innerHTML = `
+                        <div class="p-4 bg-discord-error/10 border border-discord-error rounded-lg">
+                            <div class="flex items-center space-x-2 text-discord-error">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>${data.error}</span>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                resultsDiv.innerHTML = data.results.map(result => `
+                    <div class="p-4 rounded-lg transition-all duration-200 ${
+                        result.status === 'success' 
+                            ? 'bg-discord-success/10 border border-discord-success' 
+                            : 'bg-discord-error/10 border border-discord-error'
+                    }">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 ${
+                                    result.status === 'success' 
+                                        ? 'text-discord-success' 
+                                        : 'text-discord-error'
+                                }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
+                                        result.status === 'success'
+                                            ? 'M5 13l4 4L19 7'
+                                            : 'M6 18L18 6M6 6l12 12'
+                                    }"/>
+                                </svg>
+                                <span class="font-medium">${result.token}</span>
+                            </div>
+                            <span class="text-sm ${
+                                result.status === 'success' 
+                                    ? 'text-discord-success' 
+                                    : 'text-discord-error'
+                            }">${result.message}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Refresh token status after boost
+                checkTokenStatus();
+
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="p-4 bg-discord-error/10 border border-discord-error rounded-lg">
+                        <div class="flex items-center space-x-2 text-discord-error">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>Error: ${error.message}</span>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = `
+                    <span>Start Boosting</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                `;
+            }
+        });
+
+        // Discord-style Token Avatar List Logic
+        const tokenAvatarList = document.getElementById('tokenAvatarList');
+        const addTokenBtn = document.getElementById('addTokenBtn');
+        const tokenModal = document.getElementById('tokenModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalTokenValue = document.getElementById('modalTokenValue');
+        const modalCancel = document.getElementById('modalCancel');
+        const modalSave = document.getElementById('modalSave');
+        const modalDelete = document.getElementById('modalDelete');
+
+        let editingTokenId = null;
+
+        function showNotification(msg, type = 'error') {
+            let n = document.createElement('div');
+            n.className = `fixed top-6 right-6 z-50 px-4 py-2 rounded shadow-lg text-sm font-semibold ${type === 'error' ? 'bg-discord-error text-white' : 'bg-discord-success text-white'}`;
+            n.textContent = msg;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 3000);
+        }
+
+        async function fetchTokens() {
+            try {
+                const res = await fetch('/tokens');
+                const data = await res.json();
+                renderTokenAvatarList(data.tokens);
+            } catch (e) {
+                showNotification('Token listesi alınamadı!', 'error');
+            }
+        }
+
+        function renderTokenAvatarList(tokens) {
+            tokenAvatarList.innerHTML = '';
+            if (!tokens.length) {
+                tokenAvatarList.innerHTML = '<div class="text-discord-light/60 text-xs mt-4">No tokens</div>';
+                return;
+            }
+            tokens.forEach(token => {
+                const btn = document.createElement('button');
+                btn.className = 'group relative w-12 h-12 flex items-center justify-center rounded-2xl bg-discord-darkest hover:bg-discord-blurple/80 transition border-2 border-discord-darkest hover:border-discord-blurple focus:outline-none overflow-visible';
+                btn.innerHTML = `<img src="${token.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="avatar" class="w-10 h-10 rounded-full">`;
+                // Click: add to textarea
+                btn.onclick = () => {
+                    const textarea = document.getElementById('tokens');
+                    if (!textarea.value.includes(token.value)) {
+                        textarea.value = textarea.value ? textarea.value + '\n' + token.value : token.value;
+                        textarea.dispatchEvent(new Event('input'));
+                    }
+                };
+                // Advanced tooltip on hover (body-level)
+                btn.onmouseenter = (e) => {
+                    const tooltip = document.createElement('div');
+                    tooltip.id = 'global-token-tooltip';
+                    tooltip.className = 'fixed bg-discord-darkest text-discord-light text-xs rounded px-3 py-2 shadow-lg border border-discord-darkest z-[99999] whitespace-nowrap pointer-events-none transition';
+                    tooltip.innerHTML = `<span class="font-semibold">${token.label || 'Unknown'}</span><br>${token.nitro ? '<span class=\"text-discord-success\">Nitro Active</span>' : '<span class=\"text-discord-error\">No Nitro</span>'}`;
+                    document.body.appendChild(tooltip);
+                    function moveTooltip(ev) {
+                        tooltip.style.left = (ev.clientX + 16) + 'px';
+                        tooltip.style.top = (ev.clientY - 10) + 'px';
+                    }
+                    moveTooltip(e);
+                    btn.onmousemove = moveTooltip;
+                    btn.onmouseleave = () => {
+                        tooltip.remove();
+                        btn.onmousemove = null;
+                        btn.onmouseleave = null;
+                    };
+                };
+                // Right click: edit/delete
+                btn.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    openTokenModal(token);
+                };
+                tokenAvatarList.appendChild(btn);
+            });
+        }
+
+        function openTokenModal(token) {
+            editingTokenId = token ? token.id : null;
+            modalTitle.textContent = token ? 'Edit Token' : 'Add Token';
+            modalTokenValue.value = token ? token.value : '';
+            tokenModal.classList.remove('hidden');
+        }
+
+        addTokenBtn.onclick = () => openTokenModal();
+        modalCancel.onclick = () => { tokenModal.classList.add('hidden'); };
+        modalSave.onclick = async () => {
+            const value = modalTokenValue.value.trim();
+            if (!value) return;
+            try {
+                if (editingTokenId) {
+                    await fetch(`/tokens/${editingTokenId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ value })
+                    });
+                } else {
+                    const res = await fetch('/tokens', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ value })
+                    });
+                    if (!res.ok) {
+                        const data = await res.json();
+                        showNotification(data.error || 'Token eklenemedi!', 'error');
+                        return;
+                    }
+                }
+                tokenModal.classList.add('hidden');
+                fetchTokens();
+            } catch (e) {
+                showNotification('Token eklenemedi!', 'error');
+            }
+        };
+        modalDelete.onclick = async () => {
+            if (editingTokenId) {
+                await fetch(`/tokens/${editingTokenId}`, { method: 'DELETE' });
+                tokenModal.classList.add('hidden');
+                fetchTokens();
+            }
+        };
+        // Modal close on background click
+        window.onclick = (e) => {
+            if (e.target === tokenModal) tokenModal.classList.add('hidden');
+        };
+        // Fetch tokens on load
+        fetchTokens();
+    </script>
+</body>
+</html> 

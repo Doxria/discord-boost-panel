@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn-discord {
+    @apply bg-discord-blurple hover:bg-discord-blurpleHover text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 shadow-sm focus:ring-2 focus:ring-discord-blurple focus:outline-none;
+  }
+  
+  .input-discord {
+    @apply bg-discord-input border border-discord-darkest text-discord-light rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blurple focus:border-transparent placeholder-discord-light/60;
+  }
+  
+  .card-discord {
+    @apply bg-discord-darker rounded-2xl shadow-2xl p-6 border border-discord-darkest/80 backdrop-blur-md;
+  }
+
+  .panel-discord {
+    @apply bg-discord-darkest/80 rounded-xl border border-discord-darkest shadow-lg p-4;
+  }
+
+  .header-discord {
+    @apply text-3xl font-extrabold text-discord-blurple mb-2 tracking-tight;
+  }
+
+  .scrollbar-discord {
+    scrollbar-width: thin;
+    scrollbar-color: #2f3136 #202225;
+  }
+  .scrollbar-discord::-webkit-scrollbar {
+    width: 8px;
+    background: #202225;
+  }
+  .scrollbar-discord::-webkit-scrollbar-thumb {
+    background: #2f3136;
+    border-radius: 8px;
+  }
+} 
