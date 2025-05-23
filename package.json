@@ -1,0 +1,25 @@
+{
+  "name": "dcb",
+  "version": "1.0.0",
+  "description": "Discord Nitro Boosting Tool",
+  "license": "MIT",
+  "author": "Doxria",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "build:css": "tailwindcss -i ./public/css/input.css -o ./public/css/output.css --watch"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3",
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35"
+  }
+}
